@@ -1,5 +1,6 @@
 import sys
 import re
+from typing import TextIO
 
 # Asegura la codificación UTF-8 en la consola para Windows
 if sys.platform == "win32":
@@ -164,91 +165,37 @@ def analizar_linea(linea, numero_linea):
                 
     return lista_tokens
 
-# --- BUCLE PRINCIPAL DEL MENÚ ---
-# Mantiene la ejecución interactiva del programa en la consola hasta que el usuario decida salir.
-while True:
-    print("\n" + "="*40)
-    print("      MENÚ - ANALIZADOR LÉXICO")
-    print("="*40)
-    print("1. Analizar una línea manualmente")
-    print("2. Analizar un archivo .txt")
-    print("3. Salir")
-    print("="*40)
+def prompt():
+    print('Bari26> ', end='', flush=True)
+
+if __name__ == '__main__':
+    # Verificar argumentos
+    if len(sys.argv) > 2:
+        print('Error: demasiados argumentos.')
+        print(f'Uso: {sys.argv[0]} [nombre de archivo]')
+        print('Sin nombre de archivo, se lee la entrada estándar.')
+        sys.exit(1)
     
-    # Captura la opción del usuario eliminando espacios en blanco innecesarios en los extremos
-    opcion = input("Seleccione una opción (1-3): ").strip()
+    # Leer un archivo si se pasó como argumento, si no leer stdin
+    entrada: TextIO
+    imprimir_prompt: bool
+    if len(sys.argv) == 2:
+        entrada = open(sys.argv[1])
+        imprimir_prompt = False
+    else:
+        entrada = sys.stdin
+        imprimir_prompt = True
     
-    # -----------------------------------------------------------------
-    # OPCIÓN 1: ANÁLISIS MANUAL POR TECLADO
-    # -----------------------------------------------------------------
-    if opcion == "1":
-        print("\n--- Modo Manual ---")
-        linea_manual = input("Ingrese línea de código: ")
-        
-        # Invoca la función asignándole por defecto la línea número 1
-        tokens = analizar_linea(linea_manual, 1)
-        
-        print("\n--- Resultado del análisis (Línea 1) ---")
-        if len(tokens) > 0:
-            # Imprime uno a uno los tokens llamando implícitamente al método __repr__ de la clase Token
+    if imprimir_prompt:
+        prompt()
+
+    for número, línea in enumerate(entrada):
+        tokens = analizar_linea(línea, número)
+        if len(tokens) == 0:
+            print("[Línea vacía o sin tokens válidos]")
+        else:
             for t in tokens:
                 print(t)
-        else:
-            print("[Línea vacía o sin tokens válidos]")
-        print("-" * 30)
-
-    # -----------------------------------------------------------------
-    # OPCIÓN 2: ANÁLISIS DE UN ARCHIVO DE TEXTO PLANO
-    # -----------------------------------------------------------------
-    elif opcion == "2":
-        print("\n--- Modo Archivo .txt ---")
-        ruta = input("Ingrese la ruta completa del archivo .txt: ").strip()
-        # Limpieza elemental de comillas por si el usuario arrastró el archivo a la terminal
-        ruta = ruta.replace("'", "")
-        ruta = ruta.replace('"', '')
-        
-        try:
-            # Abre el archivo en modo lectura ('r') garantizando compatibilidad de caracteres con UTF-8
-            with open(ruta, 'r', encoding='utf-8') as archivo:
-                print("\nLeyendo el archivo '" + ruta + "' y procesando tokens...")
-                
-                todos_los_tokens = []
-                contador_lineas = 0
-                
-                # Lee el archivo línea por línea
-                for linea_archivo in archivo:
-                    contador_lineas = contador_lineas + 1
-                    # Elimina los saltos de línea (\r y \n) del final de la cadena
-                    linea_limpia = linea_archivo.rstrip('\r\n')
-                    # Analiza la línea actual pasando su respectivo número de renglón
-                    tokens_linea = analizar_linea(linea_limpia, contador_lineas)
-                    # Agrega los tokens individuales encontrados en esta línea a la lista global
-                    for t in tokens_linea:
-                        todos_los_tokens.append(t)
-                        print("\n" + "·"*40)
-                        print("   RESULTADO DEL ANÁLISIS DEL ARCHIVO")
-                        print("·"*40)
             
-            if len(todos_los_tokens) > 0:
-                for t in todos_los_tokens:
-                    print(t)
-                    print("\n📊 Total de tokens encontrados: " + str(len(todos_los_tokens)))
-            else:
-                print("[El archivo está vacío o no contiene tokens analizables]")
-                print("--- Análisis de archivo finalizado ---")
-            
-        except FileNotFoundError:
-                # Manejo específico en caso de que la ruta o el archivo no existan
-                print("Error: El archivo en la ruta '" + ruta + "' no existe.")
-        except Exception as e:
-                # Captura cualquier otro error inesperado (permisos, codificación corrupta, etc.)
-                print("Ocurrió un error al leer el archivo: " + str(e))
-        print("-" * 30)
-    # -----------------------------------------------------------------
-    # OPCIÓN 3: CIERRE DEL PROGRAMA
-    # -----------------------------------------------------------------
-    elif opcion == "3":
-        print("\nPrograma finalizado.")
-        sys.exit() # Termina por completo el proceso de Python
-    else:
-        print("Opción inválida. Por favor, elija un número del 1 al 3.")
+        if imprimir_prompt:
+            prompt()
