@@ -38,11 +38,10 @@ class Token:
         """
         # Si el token incluye un estado especial, se formatea de manera extendida
         if self.estado != "":
-            texto = "<" + self.tipo + " (" + self.estado + '), "' + self.lexema + '", línea ' + str(self.linea) + ">"
-            return texto
+            return f'<{self.tipo} ({self.estado}), "{self.lexema}", línea {self.linea}>'
         # Formato estándar para tokens comunes sin estados adicionales
-        texto = "<" + self.tipo + ', "' + self.lexema + '", línea ' + str(self.linea) + ">"
-        return texto
+        else:
+            return f'<{self.tipo}, "{self.lexema}", línea {self.linea}>'
 
 # =========================================================================
 # --- CONFIGURACIÓN DE TOKENS (EXPRESIONES REGULARES DIRECTAS) ---
@@ -87,14 +86,10 @@ REGLAS_LEXICAS = [
 # =========================================================================
 # Esta sección unifica todas las expresiones regulares individuales en una sola gran 
 # expresión utilizando "Grupos Nombrados" (?P<Nombre>patrón) separados por el operador OR (|).
-partes_del_patron = []
-for nombre_token, expresion_regular in REGLAS_LEXICAS:
-    # Se etiqueta cada sub-patrón con el nombre de su token correspondiente
-    bloque = "(?P<" + nombre_token + ">" + expresion_regular + ")"
-    partes_del_patron.append(bloque)
-
-# Se unen todos los bloques con el carácter '|' (OR lógico de expresiones regulares)
-patron_lexico = "|".join(partes_del_patron)
+patron_lexico = "|".join(
+    f"(?P<{nombre_token}>{expresion_regular})"
+    for nombre_token, expresion_regular in REGLAS_LEXICAS
+)
 
 
 def analizar_linea(linea, numero_linea):
