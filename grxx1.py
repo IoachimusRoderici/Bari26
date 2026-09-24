@@ -70,8 +70,8 @@ REGLAS_LEXICAS = [
     # 8. Espacios
     ("ESPACIO",            r"\s+"),
     
-    # 9. Captura de errores: Cualquier bloque residual que no encajó en lo anterior
-    ("ERROR_LEXICO",       r".+"),
+    # 9. Captura de errores: Cualquier bloque residual que no encaja en lo anterior
+    ("ERROR_LEXICO",       r"[^\s;=\*&]+"),
 ]
 
 # =========================================================================
