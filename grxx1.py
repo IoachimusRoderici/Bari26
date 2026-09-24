@@ -168,6 +168,21 @@ def analizar_linea(linea, numero_linea):
 def prompt():
     print('Bari26> ', end='', flush=True)
 
+def main(entrada: TextIO, entrada_es_stdin: bool):
+    if entrada_es_stdin:
+        prompt()
+        
+    for número, línea in enumerate(entrada):
+        tokens = analizar_linea(línea, número)
+        if len(tokens) == 0:
+            print("[Línea vacía o sin tokens válidos]")
+        else:
+            for t in tokens:
+                print(t)
+            
+        if entrada_es_stdin:
+            prompt()
+
 if __name__ == '__main__':
     # Verificar argumentos
     if len(sys.argv) > 2:
@@ -177,25 +192,13 @@ if __name__ == '__main__':
         sys.exit(1)
     
     # Leer un archivo si se pasó como argumento, si no leer stdin
-    entrada: TextIO
-    imprimir_prompt: bool
     if len(sys.argv) == 2:
-        entrada = open(sys.argv[1])
-        imprimir_prompt = False
+        with open(sys.argv[1], encoding='utf-8') as entrada:
+            main(entrada, False)
     else:
-        entrada = sys.stdin
-        imprimir_prompt = True
+        main(sys.stdin, True)
     
-    if imprimir_prompt:
-        prompt()
+    
 
-    for número, línea in enumerate(entrada):
-        tokens = analizar_linea(línea, número)
-        if len(tokens) == 0:
-            print("[Línea vacía o sin tokens válidos]")
-        else:
-            for t in tokens:
-                print(t)
-            
-        if imprimir_prompt:
-            prompt()
+    
+
