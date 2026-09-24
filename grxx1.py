@@ -47,7 +47,7 @@ palabras_reservadas = "CARGA|carga|GUARDA|guarda|SEPARA|separa|AGREGA|agrega|REC
 # El orden importa: las expresiones de arriba se evalúan antes que las de abajo.
 REGLAS_LEXICAS = [
     # 1. Constantes numéricas enteras
-    ("NÚMERO",     r"\b\d+\b"),
+    ("NÚMERO",             r"\b\d+\b"),
 
     # 2. Archivos válidos con su extensión de 3 letras (Ej: datos.txt)
     ("NOMBRE_ARCHIVO",     r"[a-zA-Z0-9_-]+\.[a-zA-Z0-9]+"),
@@ -62,7 +62,7 @@ REGLAS_LEXICAS = [
     ("PALABRA_RESERVADA",  r"\b(" + palabras_reservadas + r")\b"),
     
     # 6. Formato estricto de variables (Letra minúscula inicial y largo máximo de 10)
-    ("NOMBRE_VARIABLE",           r"\b[a-z][a-z0-9]{0,9}\b"),
+    ("NOMBRE_VARIABLE",    r"\b[a-z][a-z0-9]{0,9}\b"),
     
     # 7. Identificadores de columnas (Inician con letra, cualquier longitud)
     ("NOMBRE_COLUMNA",     r"\b[a-zA-Z][a-zA-Z0-9]*\b"),
