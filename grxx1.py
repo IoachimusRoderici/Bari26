@@ -1,3 +1,13 @@
+# Etapa I – Construcción de Lexi/Preprocesador
+# -----------------
+# Compiladores e Intérpretres - Cátedra Arriazu (2026)
+# Ingenieria en Computacion (UNRN)
+# -----------------
+# Alumnos:
+#   Luciano Yaben
+#   Joaquín Rodriguez
+#   Enrique Nicanor Mariotti
+
 import sys
 import re
 from typing import TextIO
@@ -6,7 +16,6 @@ from typing import TextIO
 if sys.platform == "win32":
     import codecs
     sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer)
-
 
 class Token:
     """
@@ -36,21 +45,22 @@ class Token:
         """
         return f'<{self.tipo}, "{self.lexema}", línea {self.linea}>'
 
-# =========================================================================
-# --- CONFIGURACIÓN DE TOKENS (EXPRESIONES REGULARES DIRECTAS) ---
-# =========================================================================
-
-# Lista explícita de palabras reservadas. Se acepta toda la palabra en mayúscula o en minúscula.
+# Configuración de Tokens usando REGEX directas.
+# Lista explícita de palabras reservadas. Se acepta toda la palabra en mayúscula o toda en minúscula.
 palabras_reservadas = "CARGA|carga|GUARDA|guarda|SEPARA|separa|AGREGA|agrega|RECORTA|recorta|PALANTE|palante|PATRAS|patras"
 
-# Matriz de tuplas que define las prioridades del analizador léxico. 
-# El orden importa: las expresiones de arriba se evalúan antes que las de abajo.
+# Lista de tuplas que define las prioridades del analizador léxico. 
+# Las expresiones primero en la lista se evalúan antes que las de abajo.
 REGLAS_LEXICAS = [
-    # 1. Constantes numéricas enteras
+    # 1. Constantes numéricas enteras, aquí	"\d" equivalente a [0-9]
     ("NÚMERO",             r"\b\d+\b"),
 
-    # 2. Archivos válidos con su extensión de 3 letras (Ej: datos.txt)
-    ("NOMBRE_ARCHIVO",     r"[a-zA-Z0-9_-]+\.[a-zA-Z0-9]+"),
+    # 2. Archivos válidos solo con extensión. Ejemplos válidos:
+    #    archivo.txt
+    #    archivo.json
+    #    archivo.tar.gz
+    #    README.md
+    ("NOMBRE_ARCHIVO",     r"[a-zA-Z0-9_-]+(\.[a-zA-Z0-9]+)+"),
 
     # 3. Coma independiente
     ("COMA",               r","),
@@ -74,9 +84,6 @@ REGLAS_LEXICAS = [
     ("ERROR_LEXICO",       r"[^\s;=\*&]+"),
 ]
 
-# =========================================================================
-# --- CONSTRUCCIÓN DINÁMICA DEL PATRÓN REGEX ---
-# =========================================================================
 # Esta sección unifica todas las expresiones regulares individuales en una sola gran 
 # expresión utilizando "Grupos Nombrados" (?P<Nombre>patrón) separados por el operador OR (|).
 patron_lexico = "|".join(
@@ -143,8 +150,3 @@ if __name__ == '__main__':
             main(entrada, False)
     else:
         main(sys.stdin, True)
-    
-    
-
-    
-
