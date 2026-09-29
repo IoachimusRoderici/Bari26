@@ -137,11 +137,22 @@ def main(entrada: TextIO, entrada_es_stdin: bool):
             prompt()
 
 if __name__ == '__main__':
+
+    # Prints
+    print(f"Etapa I - Construcción de Lexi/Preprocesador") 
+    print(f"-----------------") 
+    print(f"Compiladores e Intérpretres - Cátedra Arriazu (2026)") 
+    print(f"Ingeniería en Computacion (UNRN)") 
+    print(f"-----------------") 
+    print(f"Grupo N°3") 
+    print(f"-----------------") 
+    print(f"Uso: {sys.argv[0]} [nombre de archivo]")
+    print(f"Sin nombre de archivo, se lee la entrada estándar.")
+    print(f"-----------------") 
+
     # Verificar argumentos
     if len(sys.argv) > 2:
         print('Error: demasiados argumentos.')
-        print(f'Uso: {sys.argv[0]} [nombre de archivo]')
-        print('Sin nombre de archivo, se lee la entrada estándar.')
         sys.exit(1)
     
     # Leer un archivo si se pasó como argumento, si no leer stdin
