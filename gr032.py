@@ -10,7 +10,7 @@
 
 import sys
 from typing import TextIO
-from gr031 import analizar_linea
+from gr031 import analizar_linea, Token
 
 # Definición de la GLC.
 # sentencia     → carga | guarda | separa | agrega | recorta | PATRAS | PALANTE
@@ -24,122 +24,126 @@ from gr031 import analizar_linea
 
 # Funciones que representan terminales.
 
-def tipo(t: list, tipos: tuple, desc: str) -> tuple[bool, list, str]:
+def tipo(tokens: list[Token], tipos: tuple[str, ...], desc: str) -> tuple[bool, list[Token], str]:
     # print(t[0].tipo in tipos) # debug
-    if len(t) > 0 and t[0].tipo in tipos:
-        return (True, t[1:], f'')
-    return (False, t, desc)
+    if len(tokens) > 0 and tokens[0].tipo in tipos:
+        return (True, tokens[1:], '')
+    else:
+        return (False, tokens, desc)
 
-def palabra_reservada(t: list, palabra: str) -> tuple[bool, list, str]:
-    if len(t) > 0 and t[0].tipo == 'PALABRA_RESERVADA' and t[0].lexema.upper() == palabra:
-        return (True, t[1:], f'')
-    return (False, t, f'la palabra reservada {palabra}')
+def palabra_reservada(tokens: list[Token], palabra: str) -> tuple[bool, list[Token], str]:
+    if len(tokens) > 0 and tokens[0].tipo == 'PALABRA_RESERVADA' and tokens[0].lexema.upper() == palabra:
+        return (True, tokens[1:], '')
+    else:
+        return (False, tokens, f'la palabra reservada {palabra}')
 
-def coma(t: list) -> tuple[bool, list, str]:
-    return tipo(t, ('COMA',), "una coma ','")
+def coma(tokens: list[Token]) -> tuple[bool, list[Token], str]:
+    return tipo(tokens, ('COMA',), "una coma ','")
 
-def nombre_variable(t: list) -> tuple[bool, list, str]:
-    return tipo(t, ('NOMBRE_VARIABLE',), 'un nombre de variable')
+def nombre_variable(tokens: list[Token]) -> tuple[bool, list[Token], str]:
+    return tipo(tokens, ('NOMBRE_VARIABLE',), 'un nombre de variable')
 
-def nombre_archivo(t: list) -> tuple[bool, list, str]:
-    return tipo(t, ('NOMBRE_ARCHIVO',), 'un nombre de archivo')
+def nombre_archivo(tokens: list[Token]) -> tuple[bool, list[Token], str]:
+    return tipo(tokens, ('NOMBRE_ARCHIVO',), 'un nombre de archivo')
 
-def numero(t: list) -> tuple[bool, list, str]:
-    return tipo(t, ('NÚMERO',), 'un número')
+def numero(tokens: list[Token]) -> tuple[bool, list[Token], str]:
+    return tipo(tokens, ('NÚMERO',), 'un número')
 
 # nt*: Funciones que representan no terminales.
 
-def ntOpcional(t: list) -> tuple[bool, list, str]:
-    if len(t) > 0 and t[0].tipo == 'COMA':
-        resp, t, esperado = tipo(t[1:], ('SEPARADOR',), "un separador (; = * &)")
+def ntOpcional(tokens: list[Token]) -> tuple[bool, list[Token], str]:
+    if len(tokens) > 0 and tokens[0].tipo == 'COMA':
+        resp, tokens, esperado = tipo(tokens[1:], ('SEPARADOR',), "un separador (; = * &)")
     else:
         resp = True  # lambda: no consume nada, si sobra algo lo detecta analizar_sintaxis()
-        esperado = f''
-    return (resp, t, esperado)
+        esperado = ''
+    return (resp, tokens, esperado)
 
-def ntCarga(t: list) -> tuple[bool, list, str]:
-    resp, t, esperado = palabra_reservada(t, 'CARGA')
+def ntCarga(tokens: list[Token]) -> tuple[bool, list[Token], str]:
+    resp, tokens, esperado = palabra_reservada(tokens, 'CARGA')
     if resp: 
-        resp, t, esperado = nombre_archivo(t)
+        resp, tokens, esperado = nombre_archivo(tokens)
     if resp: 
-        resp, t, esperado = coma(t)
+        resp, tokens, esperado = coma(tokens)
     if resp: 
-        resp, t, esperado = nombre_variable(t)
+        resp, tokens, esperado = nombre_variable(tokens)
     if resp: 
-        resp, t, esperado = ntOpcional(t)
-    return (resp, t, esperado)
+        resp, tokens, esperado = ntOpcional(tokens)
+    return (resp, tokens, esperado)
 
-def ntGuarda(t: list) -> tuple[bool, list, str]:
-    resp, t, esperado = palabra_reservada(t, 'GUARDA')
+def ntGuarda(tokens: list[Token]) -> tuple[bool, list[Token], str]:
+    resp, tokens, esperado = palabra_reservada(tokens, 'GUARDA')
     if resp: 
-        resp, t, esperado = nombre_archivo(t)
+        resp, tokens, esperado = nombre_archivo(tokens)
     if resp: 
-        resp, t, esperado = coma(t)
+        resp, tokens, esperado = coma(tokens)
     if resp: 
-        resp, t, esperado = nombre_variable(t)
+        resp, tokens, esperado = nombre_variable(tokens)
     if resp: 
-        resp, t, esperado = ntOpcional(t)
-    return (resp, t, esperado)
+        resp, tokens, esperado = ntOpcional(tokens)
+    return (resp, tokens, esperado)
 
-def ntColumna(t: list) -> tuple[bool, list, str]:
+def ntColumna(tokens: list[Token]) -> tuple[bool, list[Token], str]:
     valores = ('NOMBRE_COLUMNA', 'NÚMERO', 'NOMBRE_VARIABLE')
-    return tipo(t, valores, 'un nombre de columna o número de columna')
+    return tipo(tokens, valores, 'un nombre de columna o número de columna')
 
-def ntSepara(t: list) -> tuple[bool, list, str]:
-    resp, t, esperado = palabra_reservada(t, 'SEPARA')
+def ntSepara(tokens: list[Token]) -> tuple[bool, list[Token], str]:
+    resp, tokens, esperado = palabra_reservada(tokens, 'SEPARA')
     if resp: 
-        resp, t, esperado = nombre_variable(t)
+        resp, tokens, esperado = nombre_variable(tokens)
     if resp: 
-        resp, t, esperado = coma(t)
+        resp, tokens, esperado = coma(tokens)
     if resp: 
-        resp, t, esperado = nombre_variable(t)
+        resp, tokens, esperado = nombre_variable(tokens)
     if resp: 
-        resp, t, esperado = coma(t)
+        resp, tokens, esperado = coma(tokens)
     if resp: 
-        resp, t, esperado = ntColumna(t)
-    return (resp, t, esperado)
+        resp, tokens, esperado = ntColumna(tokens)
+    return (resp, tokens, esperado)
 
-def ntAgrega(t: list) -> tuple[bool, list, str]:
-    resp, t, esperado = palabra_reservada(t, 'AGREGA')
+def ntAgrega(tokens: list[Token]) -> tuple[bool, list[Token], str]:
+    resp, tokens, esperado = palabra_reservada(tokens, 'AGREGA')
     if resp: 
-        resp, t, esperado = nombre_variable(t)
+        resp, tokens, esperado = nombre_variable(tokens)
     if resp: 
-        resp, t, esperado = coma(t)
+        resp, tokens, esperado = coma(tokens)
     if resp: 
-        resp, t, esperado = nombre_variable(t)
-    return (resp, t, esperado)
+        resp, tokens, esperado = nombre_variable(tokens)
+    return (resp, tokens, esperado)
 
-def ntRecorta(t: list) -> tuple[bool, list, str]:
-    resp, t, esperado = palabra_reservada(t, 'RECORTA')
+def ntRecorta(tokens: list[Token]) -> tuple[bool, list[Token], str]:
+    resp, tokens, esperado = palabra_reservada(tokens, 'RECORTA')
     if resp: 
-        resp, t, esperado = nombre_variable(t)
+        resp, tokens, esperado = nombre_variable(tokens)
     if resp: 
-        resp, t, esperado = coma(t)
+        resp, tokens, esperado = coma(tokens)
     if resp: 
-        resp, t, esperado = numero(t)
-    return (resp, t, esperado)
+        resp, tokens, esperado = numero(tokens)
+    return (resp, tokens, esperado)
 
-def ntPatras(t: list) -> tuple[bool, list, str]:
-    return palabra_reservada(t, 'PATRAS')
+def ntPatras(tokens: list[Token]) -> tuple[bool, list[Token], str]:
+    return palabra_reservada(tokens, 'PATRAS')
 
-def ntPalante(t: list) -> tuple[bool, list, str]:
-    return palabra_reservada(t, 'PALANTE')
+def ntPalante(tokens: list[Token]) -> tuple[bool, list[Token], str]:
+    return palabra_reservada(tokens, 'PALANTE')
 
-def ntSentencia(t: list) -> tuple[bool, list, str]:
+def ntSentencia(tokens: list[Token]) -> tuple[bool, list[Token], str]:
 
-    # Las palabras reservadas son terminales, pero identifican al tipo de produccion.
-    SENTENCIAS = {'CARGA': ntCarga, 'GUARDA': ntGuarda, 'SEPARA': ntSepara,
-                  'AGREGA': ntAgrega, 'RECORTA': ntRecorta,
-                  'PATRAS': ntPatras, 'PALANTE': ntPalante}
+    # Las palabras reservadas son terminales, pero identifican al tipo de producción.
+    SENTENCIAS = {
+        'CARGA': ntCarga, 'GUARDA': ntGuarda, 'SEPARA': ntSepara,
+        'AGREGA': ntAgrega, 'RECORTA': ntRecorta, 'PATRAS': ntPatras,
+        'PALANTE': ntPalante
+    }
 
-    # Llamada al parser de cada produccion.
-    if len(t) > 0 and t[0].tipo == 'PALABRA_RESERVADA':
-        return SENTENCIAS[t[0].lexema.upper()](t)
-    
-    return (False, t, 'una palabra reservada')
+    # Llamada al parser de cada producción.
+    if len(tokens) > 0 and tokens[0].tipo == 'PALABRA_RESERVADA':
+        return SENTENCIAS[tokens[0].lexema.upper()](tokens)
+    else:
+        return (False, tokens, 'una palabra reservada')
 
 
-def analizar_sintaxis(tokens: list, numero_linea: int) -> tuple[bool, str]:
+def analizar_sintaxis(tokens: list[Token], numero_linea: int) -> tuple[bool, str]:
     """
     Función núcleo del analizador sintáctico encargada de procesar una lista de tokens.
     
@@ -160,12 +164,14 @@ def analizar_sintaxis(tokens: list, numero_linea: int) -> tuple[bool, str]:
             if len(resto) == 0:
                 ret_val = (True, f'Línea {numero_linea}: sintaxis correcta')
             else:
-                ret_val = (False, f'Error sintáctico en línea {numero_linea}: '
-                                  f'demasiados lexemas detectados.')
+                ret_val = (
+                    False, f'Error sintáctico en línea {numero_linea}: demasiados lexemas detectados.'
+                    )
         else:
             donde = f'cerca de "{resto[0].lexema}"' if resto else 'al final de la línea'
-            ret_val = (False, f'Error sintáctico en línea {numero_linea}: {donde} '
-                              f'se esperaba {esperado}.')
+            ret_val = (
+                False, f'Error sintáctico en línea {numero_linea}: {donde} se esperaba {esperado}.'
+                )
 
     return ret_val
 
