@@ -49,7 +49,7 @@ def numero(t: list) -> tuple[bool, list, str]:
 
 # nt*: Funciones que representan no terminales.
 
-def ntOpcional(t):
+def ntOpcional(t: list) -> tuple[bool, list, str]:
     if len(t) > 0 and t[0].tipo == 'COMA':
         resp, t, esperado = tipo(t[1:], ('SEPARADOR',), "un separador (; = * &)")
     else:
