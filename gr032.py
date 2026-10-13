@@ -1,12 +1,12 @@
-# Etapa II – Analizador sintáctico
-# -----------------
-# Compiladores e Intérpretres - Cátedra Arriazu (2026)
-# Ingenieria en Computacion (UNRN)
-# -----------------
-# Alumnos:
-#   Luciano Yaben
-#   Joaquín Rodriguez
-#   Enrique Nicanor Mariotti
+'''Etapa II - Analizador sintáctico
+-----------------
+Compiladores e Intérpretres - Cátedra Arriazu (2026)
+Ingenieria en Computacion (UNRN)
+-----------------
+Grupo N°3, Alumnos:
+  Luciano Yaben
+  Joaquín Rodriguez
+  Enrique Nicanor Mariotti'''
 
 import sys
 from typing import TextIO
@@ -195,15 +195,7 @@ def main(entrada: TextIO, entrada_es_stdin: bool):
 if __name__ == '__main__':
 
     # Prints
-    print(f"Etapa II - Construcción del Analizador Sintáctico") 
-    print(f"-----------------") 
-    print(f"Compiladores e Intérpretres - Cátedra Arriazu (2026)") 
-    print(f"Ingeniería en Computacion (UNRN)") 
-    print(f"-----------------") 
-    print(f"Grupo N°3") 
-    print(f"Luciano Yaben") 
-    print(f"Joaquín Rodriguez") 
-    print(f"Enrique Nicanor Mariotti") 
+    print(__doc__) 
     print(f"-----------------") 
     print(f"Uso: {sys.argv[0]} [nombre de archivo]")
     print(f"Sin nombre de archivo, se lee la entrada estándar.")
