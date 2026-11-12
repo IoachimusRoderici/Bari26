@@ -71,7 +71,7 @@ def consumir_token(tokens: list[Token], *tipos_aceptados: str) -> tuple[str, lis
     if len(tokens) > 0 and tokens[0].tipo in tipos_aceptados:
         return tokens[0].lexema, tokens[1:]
     else:
-        raise ErrorSintáctico(f'Se esperaba un token de tipo {' o '.join(tipos_aceptados)}', tokens)
+        raise ErrorSintáctico(f'Se esperaba un token de tipo {" o ".join(tipos_aceptados)}', tokens)
 
 def consumir_palabra_reservada(tokens: list[Token]) -> tuple[str, int, list[Token]]:
     if len(tokens) > 0 and tokens[0].tipo == 'PALABRA_RESERVADA':
