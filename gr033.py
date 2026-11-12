@@ -267,43 +267,98 @@ class Tabla:
     Contiene los datos de una tabla.
 
     La tabla está representada como una lista de columnas. Cada columna es una
-    lista que contiene el valor de cada fila. Se eligió esta estructura para hacer
-    más fáciles las operaciones que mueven columnas de lugar.
+    lista que contiene el valor de cada fila. La primera fila tiene los nombres
+    de las columnas.
+
+    Se eligió esta estructura para hacer más fáciles las operaciones que mueven
+    columnas de lugar.
     """
 
     def __init__(self):
         self.nombres_columnas: list[str] = []
-        self.columnas: list[list[str]] = []
 
     def __str__(self) -> str:
-        return 'TODO'
+        return 'TODO: convertir la tabla a string con el formato que dice la consigna'
 
-def ejecutar_carga(argumentos: tuple[Any, ...], tablas_existentes: dict[str, Tabla]) -> tuple[str,Tabla|None]:
-    return 'TODO', Tabla()
-def ejecutar_guarda(argumentos: tuple[Any, ...], tablas_existentes: dict[str, Tabla]) -> tuple[str,Tabla|None]:
-    return 'TODO', Tabla()
-def ejecutar_separa(argumentos: tuple[Any, ...], tablas_existentes: dict[str, Tabla]) -> tuple[str,Tabla|None]:
-    return 'TODO', Tabla()
-def ejecutar_agrega(argumentos: tuple[Any, ...], tablas_existentes: dict[str, Tabla]) -> tuple[str,Tabla|None]:
-    return 'TODO', Tabla()
-def ejecutar_recorta(argumentos: tuple[Any, ...], tablas_existentes: dict[str, Tabla]) -> tuple[str,Tabla|None]:
-    return 'TODO', Tabla()
-def ejecutar_palante(argumentos: tuple[Any, ...], tablas_existentes: dict[str, Tabla]) -> tuple[str,Tabla|None]:
-    return 'TODO', Tabla()
-def ejecutar_patras(argumentos: tuple[Any, ...], tablas_existentes: dict[str, Tabla]) -> tuple[str,Tabla|None]:
-    return 'TODO', Tabla()
+def ejecutar_carga(
+    tablas_existentes: dict[str, Tabla],
+    acciones,
+    nombre_archivo: str,
+    nombre_variable: str,
+    separador: str
+) -> tuple[str,Tabla|None]:
+    '''
+    Cargar una tabla con datos leídos de un archivo de texto.
+    '''
+    return 'TODO: mensaje o nombre de la tabla que se devuelve', Tabla()
 
-def ejecutar(sentencia: Sentencia, tablas_existentes: dict[str, Tabla]) -> tuple[str,Tabla|None]:
+def ejecutar_guarda(
+    tablas_existentes: dict[str, Tabla],
+    acciones,
+    nombre_archivo: str,
+    nombre_variable: str
+) -> tuple[str,Tabla|None]:
+    '''
+    Guardar una tabla a un archivo de texto.
+    '''
+    return 'TODO: mensaje o nombre de la tabla que se devuelve', Tabla()
+
+def ejecutar_separa(
+    tablas_existentes: dict[str, Tabla],
+    acciones,
+    nombre_tabla1: str,
+    nombre_tabla2: str,
+    columna: str|int
+) -> tuple[str,Tabla|None]:
+    '''
+    Extraer una columna de la tabla1 y guardarla como tabla2.
+    '''
+    return 'TODO: mensaje o nombre de la tabla que se devuelve', Tabla()
+
+def ejecutar_agrega(
+    tablas_existentes: dict[str, Tabla],
+    acciones,
+    nombre_tabla1: str,
+    nombre_tabla2: str
+) -> tuple[str,Tabla|None]:
+    '''
+    Agregar tabla1 (debe tener una sola columna) a la derecha de tabla2.
+    '''
+    return 'TODO: mensaje o nombre de la tabla que se devuelve', Tabla()
+
+def ejecutar_recorta(
+    tablas_existentes: dict[str, Tabla],
+    acciones,
+    nombre_tabla: str,
+    cantidad_de_filas: int
+) -> tuple[str,Tabla|None]:
+    '''
+    Recortar la tabla para que no tenga más que la cantidad solicitada de filas.
+    '''
+    return 'TODO: mensaje o nombre de la tabla que se devuelve', Tabla()
+
+def ejecutar_palante(tablas_existentes: dict[str, Tabla], acciones) -> tuple[str,Tabla|None]:
+    '''
+    Rehacer una acción de la lista de acciones.
+    '''
+    return 'TODO: mensaje o nombre de la tabla que se devuelve', Tabla()
+
+def ejecutar_patras(tablas_existentes: dict[str, Tabla], acciones) -> tuple[str,Tabla|None]:
+    '''
+    Deshacer una acción de la lista de acciones.
+    '''
+    return 'TODO: mensaje o nombre de la tabla que se devuelve', Tabla()
+
+def ejecutar(sentencia: Sentencia, tablas_existentes: dict[str, Tabla], acciones) -> tuple[str,Tabla|None]:
     match sentencia.tipo:
-        case 'CARGA':   return ejecutar_carga(sentencia.argumentos, tablas_existentes)
-        case 'GUARDA':  return ejecutar_guarda(sentencia.argumentos, tablas_existentes)
-        case 'SEPARA':  return ejecutar_separa(sentencia.argumentos, tablas_existentes)
-        case 'AGREGA':  return ejecutar_agrega(sentencia.argumentos, tablas_existentes)
-        case 'RECORTA': return ejecutar_recorta(sentencia.argumentos, tablas_existentes)
-        case 'PALANTE': return ejecutar_palante(sentencia.argumentos, tablas_existentes)
-        case 'PATRAS':  return ejecutar_patras(sentencia.argumentos, tablas_existentes)
+        case 'CARGA':   return ejecutar_carga(tablas_existentes, acciones, *sentencia.argumentos)
+        case 'GUARDA':  return ejecutar_guarda(tablas_existentes, acciones, *sentencia.argumentos)
+        case 'SEPARA':  return ejecutar_separa(tablas_existentes, acciones, *sentencia.argumentos)
+        case 'AGREGA':  return ejecutar_agrega(tablas_existentes, acciones, *sentencia.argumentos)
+        case 'RECORTA': return ejecutar_recorta(tablas_existentes, acciones, *sentencia.argumentos)
+        case 'PALANTE': return ejecutar_palante(tablas_existentes, acciones, *sentencia.argumentos)
+        case 'PATRAS':  return ejecutar_patras(tablas_existentes, acciones, *sentencia.argumentos)
         case otro_tipo: raise ErrorDeEjecución(f'Tipo de sentencia inválido: {otro_tipo}')
-
 
 
 def prompt():
@@ -314,6 +369,7 @@ def main(entrada: TextIO, entrada_es_stdin: bool) -> int:
         prompt()
 
     tablas_existentes: dict[str, Tabla] = {}
+    acciones = None # TODO: hay que ver cómo representamos la lista de acciones
 
     for número, línea in enumerate(entrada, 1):
         tokens = analizar_linea(línea, número)
@@ -322,7 +378,7 @@ def main(entrada: TextIO, entrada_es_stdin: bool) -> int:
 
         try:
             sentencia = analizar_sintaxis(tokens)
-            mensaje, tabla_resultado = ejecutar(sentencia, tablas_existentes)
+            mensaje, tabla_resultado = ejecutar(sentencia, tablas_existentes, acciones)
             print(mensaje)
             if tabla_resultado:
                 print(tabla_resultado)
