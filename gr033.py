@@ -275,7 +275,7 @@ class Tabla:
     """
 
     def __init__(self):
-        self.nombres_columnas: list[str] = []
+        self.columnas: list[str] = []
 
     def __str__(self) -> str:
         return 'TODO: convertir la tabla a string con el formato que dice la consigna'
