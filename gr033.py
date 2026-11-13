@@ -315,7 +315,7 @@ def ejecutar_carga(
     except FileNotFoundError:
         raise ErrorDeEjecución(f'No se encontró el archivo {nombre_archivo}')
     except StopIteration:
-        raise ErrorDeEjecución(f'El archivo {nombre_archivo} no contiene ninguna fila')
+        raise ErrorDeEjecución(f'El archivo {nombre_archivo} no contiene ninguna columna')
     except Exception as error:
         raise ErrorDeEjecución(f'Error inesperado leyendo el archivo {nombre_archivo}: {type(error).__name__}, {error}')
 
@@ -329,12 +329,32 @@ def ejecutar_guarda(
     tablas_existentes: dict[str, Tabla],
     acciones,
     nombre_archivo: str,
-    nombre_variable: str
+    nombre_tabla: str,
+    separador: str|None
 ) -> tuple[str,Tabla|None]:
     '''
     Guardar una tabla a un archivo de texto.
     '''
-    return 'TODO: mensaje o nombre de la tabla que se devuelve', Tabla()
+    if nombre_tabla not in tablas_existentes:
+        raise ErrorDeEjecución(f'No existe la tabla {nombre_tabla}')
+
+    tabla = tablas_existentes[nombre_tabla]
+    try:
+        with open(nombre_archivo, 'w') as archivo:
+            escritor = csv.writer(
+                archivo,
+                delimiter=separador or ',',
+                quotechar="/",
+                skipinitialspace=True,
+                strict=True
+            )
+            escritor.writerows(zip(*tabla.columnas))
+    except Exception as error:
+        raise ErrorDeEjecución(f'Error inesperado escribiendo el archivo {nombre_archivo}: {type(error).__name__}, {error}')
+
+    # TODO: registrar esta acción en la lista de acciones
+
+    return f'Se escribió la tabla {nombre_tabla} en el archivo {nombre_archivo}', None
 
 def ejecutar_separa(
     tablas_existentes: dict[str, Tabla],
@@ -416,9 +436,11 @@ def main(entrada: TextIO, entrada_es_stdin: bool) -> int:
             if tabla_resultado:
                 print(tabla_resultado)
         except (ErrorLéxico, ErrorSintáctico, ErrorDeEjecución) as error:
-            print(f"Línea {número}:", error, file=sys.stderr)
-            # Si se está leyendo de un archivo, detener la ejecución al encontrar un error:
-            if not entrada_es_stdin:
+            if entrada_es_stdin:
+                print(error, file=sys.stderr)
+            else:
+                # Si se está leyendo de un archivo, detener la ejecución al encontrar un error
+                print(f"Línea {número}:", error, file=sys.stderr)
                 return 1
 
         if entrada_es_stdin:
