@@ -1,0 +1,56 @@
+Paso 1: Crea un archivo de prueba
+
+nombre;apellido;edad;ciudad
+Juan;Perez;20;Bariloche
+Maria;Gomez;22;Neuquen
+Carlos;Lopez;19;Viedma
+Ana;Martinez;21;Cipolletti
+Pedro;Diaz;23;Esquel
+Lucia;Fernandez;20;Trelew
+Diego;Ruiz;24;Comodoro
+Sofia;Torres;19;Roca
+Mateo;Sosa;22;Choele
+Valentina;Castro;21;Allen
+Tomas;Molina;25;El Bolson
+Camila;Rojas;20;Villa La Angostura
+
+Paso 2: Comandos para probar en la consola (Bari26>)
+
+1. Cargar datos con separador (CARGA):
+CARGA alumnos.csv, t1, ;
+
+2. Recortar filas (RECORTA):
+RECORTA t1, 4
+
+3. Extraer una columna por nombre (SEPARA):
+SEPARA t1, colciudad, ciudad
+
+4. Extraer una columna por posición (SEPARA con número):
+SEPARA t1, coledad, 3
+
+5. Volver a unir una columna (AGREGA):
+AGREGA colciudad, t1
+
+6. Probar deshacer y rehacer (PATRAS y PALANTE):
+
+PATRAS
+
+PALANTE
+
+7. Exportar el resultado a un nuevo archivo (GUARDA):
+GUARDA salida.csv, t1
+
+
+
+Paso 3: Pruebas de errores (para verificar validaciones)
+
+Error Léxico (símbolo no permitido como @ o #):
+CARGA datos.csv, @tabla
+
+Error Sintáctico (falta una coma o sobran argumentos):
+SEPARA t1 coledad 2
+
+Error de Ejecución (archivo o variable inexistente):
+CARGA noexiste.csv, x
+RECORTA tablafantasma, 5
+
