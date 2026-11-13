@@ -9,7 +9,7 @@ Grupo N°3, Alumnos:
   Enrique Nicanor Mariotti'''
 
 from typing import Any, TextIO
-import re, sys
+import re, sys, csv
 
 # Asegura la codificación UTF-8 en la consola para Windows
 if sys.platform == "win32":
@@ -275,7 +275,7 @@ class Tabla:
     """
 
     def __init__(self):
-        self.columnas: list[str] = []
+        self.columnas: list[list[str]] = []
 
     def __str__(self) -> str:
         return 'TODO: convertir la tabla a string con el formato que dice la consigna'
@@ -284,13 +284,46 @@ def ejecutar_carga(
     tablas_existentes: dict[str, Tabla],
     acciones,
     nombre_archivo: str,
-    nombre_variable: str,
-    separador: str
+    nombre_tabla: str,
+    separador: str|None
 ) -> tuple[str,Tabla|None]:
     '''
     Cargar una tabla con datos leídos de un archivo de texto.
     '''
-    return 'TODO: mensaje o nombre de la tabla que se devuelve', Tabla()
+    tabla = Tabla()
+    try:
+        with open(nombre_archivo) as archivo:
+            lector = csv.reader(
+                archivo,
+                delimiter=separador or ',',
+                quotechar=None,
+                skipinitialspace=True,
+                strict=True
+            )
+            primera_fila = lector.__next__()
+            tabla.columnas = [[nombre] for nombre in primera_fila]
+            for fila in lector:
+                if len(fila) != len(tabla.columnas):
+                    raise ErrorDeEjecución(
+                        f'El archivo {nombre_archivo} define {len(tabla.columnas)} nombres '
+                        f'de columnas, pero se encontraron {len(fila)} columnas en una fila'
+                    )
+                for columna, dato in zip(tabla.columnas, fila):
+                    columna.append(dato)
+    except ErrorDeEjecución:
+        raise
+    except FileNotFoundError:
+        raise ErrorDeEjecución(f'No se encontró el archivo {nombre_archivo}')
+    except StopIteration:
+        raise ErrorDeEjecución(f'El archivo {nombre_archivo} no contiene ninguna fila')
+    except Exception as error:
+        raise ErrorDeEjecución(f'Error inesperado leyendo el archivo {nombre_archivo}: {type(error).__name__}, {error}')
+
+    tablas_existentes[nombre_tabla] = tabla
+
+    # TODO: registrar esta acción en la lista de acciones
+
+    return f'Se cargó la tabla {nombre_tabla}:', tabla
 
 def ejecutar_guarda(
     tablas_existentes: dict[str, Tabla],
@@ -383,7 +416,7 @@ def main(entrada: TextIO, entrada_es_stdin: bool) -> int:
             if tabla_resultado:
                 print(tabla_resultado)
         except (ErrorLéxico, ErrorSintáctico, ErrorDeEjecución) as error:
-            print(f"Línea {número}: ", error, file=sys.stderr)
+            print(f"Línea {número}:", error, file=sys.stderr)
             # Si se está leyendo de un archivo, detener la ejecución al encontrar un error:
             if not entrada_es_stdin:
                 return 1
