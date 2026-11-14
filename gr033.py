@@ -1,4 +1,4 @@
-'''Etapa III - Programación Del Intérprete
+'''Etapa III - Traducción a Código Intermedio & Programación Del Intérprete
 -----------------
 Compiladores e Intérpretes - Cátedra Arriazu (2026)
 Ingenieria en Computación (UNRN)
@@ -9,14 +9,16 @@ Grupo N°3, Alumnos:
   Enrique Nicanor Mariotti'''
 
 from typing import Any, TextIO
-import re, sys, csv
+import re, sys, csv, os
+import copy
+import shutil
 
 # Asegura la codificación UTF-8 en la consola para Windows
 if sys.platform == "win32":
     import codecs
     sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer)
 
-#------------------ Etapa 1 ------------------
+#------------------ Etapa I: Lexi ------------------
 
 class Token:
     """
@@ -47,8 +49,9 @@ class Token:
         return f'<{self.tipo}, "{self.lexema}", línea {self.linea}>'
 
 # Configuración de Tokens usando REGEX directas.
-# Lista explícita de palabras reservadas. Se acepta toda la palabra en mayúscula o toda en minúscula.
-palabras_reservadas = "CARGA|carga|GUARDA|guarda|SEPARA|separa|AGREGA|agrega|RECORTA|recorta|PALANTE|palante|PATRAS|patras"
+# Lista explícita de palabras reservadas. 
+# NOTA: Se implementa la corrección de la Etapa I, es decir, solo acepta la palabra en mayúscula.
+palabras_reservadas = "CARGA|GUARDA|SEPARA|AGREGA|RECORTA|PALANTE|PATRAS"
 
 # Lista de tuplas que define las prioridades del analizador léxico.
 # Las expresiones primero en la lista se evalúan antes que las de abajo.
@@ -93,7 +96,6 @@ patron_lexico = "|".join(
 )
 patron_lexico_compilado = re.compile(patron_lexico)
 
-
 def analizar_linea(linea: str, numero_linea: int) -> list[Token]:
     """
     Función núcleo del analizador léxico encargada de procesar una cadena de texto (línea).
@@ -119,7 +121,7 @@ def analizar_linea(linea: str, numero_linea: int) -> list[Token]:
 
     return lista_tokens
 
-#------------------ Etapa 2 ------------------
+#------------------ Etapa II: Parser ------------------
 
 class Sentencia:
     """
@@ -249,7 +251,7 @@ def analizar_sintaxis(tokens: list[Token]) -> Sentencia:
     else:
         return consumir_sentencia(tokens)
 
-#------------------ Etapa 3 ------------------
+#------------------ Etapa III: Traducción ------------------
 
 class ErrorDeEjecución(Exception):
     """
@@ -263,144 +265,225 @@ class ErrorDeEjecución(Exception):
         return f'Error de ejecución: {self.mensaje}'
 
 class Tabla:
-    """
-    Contiene los datos de una tabla.
-
-    La tabla está representada como una lista de columnas. Cada columna es una
-    lista que contiene el valor de cada fila. La primera fila tiene los nombres
-    de las columnas.
-
-    Se eligió esta estructura para hacer más fáciles las operaciones que mueven
-    columnas de lugar.
-    """
-
     def __init__(self):
         self.columnas: list[list[str]] = []
 
     def __str__(self) -> str:
-        return 'TODO: convertir la tabla a string con el formato que dice la consigna'
+        if not self.columnas or not self.columnas[0]:
+            return "(Tabla vacía)"
+
+        # Obtener ancho de la terminal (por defecto 80 caracteres)
+        ancho_pantalla = shutil.get_terminal_size((80, 20)).columns
+        ancho_celda = 15  # Ancho fijo por columna para alineación tabular
+
+        # Preparar filas: índice 0 es encabezado, 1 en adelante son datos
+        todas_las_filas = list(zip(*self.columnas))
+        encabezado = todas_las_filas[0]
+        datos = todas_las_filas[1:]
+
+        # Regla de > 10 filas de datos: 5 primeras, '...', 4 últimas
+        if len(datos) > 10:
+            filas_a_mostrar = [encabezado] + list(datos[:5]) + [("...",) * len(encabezado)] + list(datos[-4:])
+        else:
+            filas_a_mostrar = [encabezado] + list(datos)
+
+        # Calcular cuántas columnas caben por bloque en el ancho de pantalla
+        cols_por_bloque = max(1, ancho_pantalla // (ancho_celda + 3))
+        total_cols = len(encabezado)
+        bloques_salida = []
+
+        for inicio in range(0, total_cols, cols_por_bloque):
+            fin = inicio + cols_por_bloque
+            lineas_bloque = []
+            for idx_fila, fila in enumerate(filas_a_mostrar):
+                celdas_formateadas = []
+                for celda in fila[inicio:fin]:
+                    texto = str(celda)
+                    if len(texto) > ancho_celda:
+                        texto = texto[:ancho_celda - 2] + ".."
+                    celdas_formateadas.append(f"{texto:<{ancho_celda}}")
+                lineas_bloque.append(" | ".join(celdas_formateadas))
+                
+                # Línea separadora debajo del encabezado
+                if idx_fila == 0:
+                    separador = "-+-".join("-" * ancho_celda for _ in fila[inicio:fin])
+                    lineas_bloque.append(separador)
+
+            bloques_salida.append("\n".join(lineas_bloque))
+
+        return "\n\n".join(bloques_salida)
+
+
+def registrar_accion(tablas_existentes: dict[str, Tabla], acciones: dict):
+    """Guarda una instantánea del estado actual antes de ejecutar una sentencia."""
+    acciones["historial"].append(copy.deepcopy(tablas_existentes))
+    acciones["futuro"].clear()
+
+def ruta_en_carpeta_script(nombre_archivo: str) -> str:
+    """Obtiene la ruta actual .py para encontrar el archivo de datos en la misma carpeta que el script."""
+    carpeta_script = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(carpeta_script, nombre_archivo)
 
 def ejecutar_carga(
-    tablas_existentes: dict[str, Tabla],
-    acciones,
-    nombre_archivo: str,
-    nombre_tabla: str,
-    separador: str|None
-) -> tuple[str,Tabla|None]:
-    '''
-    Cargar una tabla con datos leídos de un archivo de texto.
-    '''
+    tablas_existentes: dict[str, Tabla], acciones: dict, nombre_archivo: str, nombre_tabla: str, separador: str|None
+) -> tuple[str, Tabla|None]:
     tabla = Tabla()
     try:
-        with open(nombre_archivo) as archivo:
+        ruta_completa = ruta_en_carpeta_script(nombre_archivo)
+        with open(ruta_completa, encoding="utf-8") as archivo:
             lector = csv.reader(
-                archivo,
-                delimiter=separador or ',',
-                quotechar=None,
-                skipinitialspace=True,
-                strict=True
+                archivo, delimiter=separador or ",", quotechar=None, skipinitialspace=True, strict=True
             )
-            primera_fila = lector.__next__()
+            primera_fila = next(lector)
             tabla.columnas = [[nombre] for nombre in primera_fila]
             for fila in lector:
+                # NOTA: Aqui, si las líneas del archivo son de distinto tamaño,
+                # optamos por lanzar una excepcion para que el usuario lo corrija.
                 if len(fila) != len(tabla.columnas):
                     raise ErrorDeEjecución(
-                        f'El archivo {nombre_archivo} define {len(tabla.columnas)} nombres '
-                        f'de columnas, pero se encontraron {len(fila)} columnas en una fila'
+                        f"El archivo {nombre_archivo} define {len(tabla.columnas)} columnas, "
+                        f"pero se encontraron {len(fila)} en una fila"
                     )
                 for columna, dato in zip(tabla.columnas, fila):
                     columna.append(dato)
     except ErrorDeEjecución:
         raise
     except FileNotFoundError:
-        raise ErrorDeEjecución(f'No se encontró el archivo {nombre_archivo}')
+        raise ErrorDeEjecución(f"No se encontró el archivo {nombre_archivo}")
     except StopIteration:
-        raise ErrorDeEjecución(f'El archivo {nombre_archivo} no contiene ninguna columna')
+        raise ErrorDeEjecución(f"El archivo {nombre_archivo} no contiene ninguna columna")
     except Exception as error:
-        raise ErrorDeEjecución(f'Error inesperado leyendo el archivo {nombre_archivo}: {type(error).__name__}, {error}')
+        raise ErrorDeEjecución(f"Error inesperado leyendo {nombre_archivo}: {type(error).__name__}, {error}")
 
+    registrar_accion(tablas_existentes, acciones)
     tablas_existentes[nombre_tabla] = tabla
+    return f"Se cargó la tabla {nombre_tabla}:", tabla
 
-    # TODO: registrar esta acción en la lista de acciones
-
-    return f'Se cargó la tabla {nombre_tabla}:', tabla
 
 def ejecutar_guarda(
-    tablas_existentes: dict[str, Tabla],
-    acciones,
-    nombre_archivo: str,
-    nombre_tabla: str,
-    separador: str|None
-) -> tuple[str,Tabla|None]:
-    '''
-    Guardar una tabla a un archivo de texto.
-    '''
+    tablas_existentes: dict[str, Tabla], acciones: dict, nombre_archivo: str, nombre_tabla: str, separador: str|None
+) -> tuple[str, Tabla|None]:
     if nombre_tabla not in tablas_existentes:
-        raise ErrorDeEjecución(f'No existe la tabla {nombre_tabla}')
-
+        raise ErrorDeEjecución(f"No existe la tabla {nombre_tabla}")
     tabla = tablas_existentes[nombre_tabla]
     try:
-        with open(nombre_archivo, 'w') as archivo:
+        ruta_completa = ruta_en_carpeta_script(nombre_archivo)
+        with open(ruta_completa, "w", newline="", encoding="utf-8") as archivo:
             escritor = csv.writer(
-                archivo,
-                delimiter=separador or ',',
-                quotechar="/",
-                skipinitialspace=True,
-                strict=True
+                archivo, delimiter=separador or ",", quotechar='"', skipinitialspace=True, strict=True
             )
             escritor.writerows(zip(*tabla.columnas))
     except Exception as error:
-        raise ErrorDeEjecución(f'Error inesperado escribiendo el archivo {nombre_archivo}: {type(error).__name__}, {error}')
+        raise ErrorDeEjecución(f"Error inesperado escribiendo {nombre_archivo}: {type(error).__name__}, {error}")
 
-    # TODO: registrar esta acción en la lista de acciones
+    registrar_accion(tablas_existentes, acciones)
+    return f"Se escribió la tabla {nombre_tabla} en el archivo {nombre_archivo}", tabla
 
-    return f'Se escribió la tabla {nombre_tabla} en el archivo {nombre_archivo}', None
 
 def ejecutar_separa(
-    tablas_existentes: dict[str, Tabla],
-    acciones,
-    nombre_tabla1: str,
-    nombre_tabla2: str,
-    columna: str|int
-) -> tuple[str,Tabla|None]:
-    '''
-    Extraer una columna de la tabla1 y guardarla como tabla2.
-    '''
-    return 'TODO: mensaje o nombre de la tabla que se devuelve', Tabla()
+    tablas_existentes: dict[str, Tabla], acciones: dict, nombre_tabla1: str, nombre_tabla2: str, columna: str|int
+) -> tuple[str, Tabla|None]:
+    if nombre_tabla1 not in tablas_existentes:
+        raise ErrorDeEjecución(f"No existe la tabla {nombre_tabla1}")
+    
+    tabla1 = tablas_existentes[nombre_tabla1]
+    indice = -1
+
+    # La consigna indica que la primera columna es la 1
+    if isinstance(columna, int):
+        if 1 <= columna <= len(tabla1.columnas):
+            indice = columna - 1
+        else:
+            raise ErrorDeEjecución(f"Número de columna {columna} fuera de rango (1 a {len(tabla1.columnas)})")
+    else:
+        nombres = [col[0] for col in tabla1.columnas]
+        if columna in nombres:
+            indice = nombres.index(columna)
+        else:
+            raise ErrorDeEjecución(f"No existe la columna '{columna}' en {nombre_tabla1}")
+
+    registrar_accion(tablas_existentes, acciones)
+    
+    col_extraida = tabla1.columnas.pop(indice)
+    nueva_tabla = Tabla()
+    nueva_tabla.columnas = [col_extraida]
+    tablas_existentes[nombre_tabla2] = nueva_tabla
+
+    return f"Se separó la columna hacia {nombre_tabla2}:", nueva_tabla
+
 
 def ejecutar_agrega(
-    tablas_existentes: dict[str, Tabla],
-    acciones,
-    nombre_tabla1: str,
-    nombre_tabla2: str
-) -> tuple[str,Tabla|None]:
-    '''
-    Agregar tabla1 (debe tener una sola columna) a la derecha de tabla2.
-    '''
-    return 'TODO: mensaje o nombre de la tabla que se devuelve', Tabla()
+    tablas_existentes: dict[str, Tabla], acciones: dict, nombre_tabla1: str, nombre_tabla2: str
+) -> tuple[str, Tabla|None]:
+    # SEPARA: <nomVariable1> es la columna de ancho 1, <nomVariable2> es la tabla base
+    if nombre_tabla1 not in tablas_existentes:
+        raise ErrorDeEjecución(f"No existe la tabla {nombre_tabla1}")
+    if nombre_tabla2 not in tablas_existentes:
+        raise ErrorDeEjecución(f"No existe la tabla {nombre_tabla2}")
+
+    t1 = tablas_existentes[nombre_tabla1]
+    t2 = tablas_existentes[nombre_tabla2]
+
+    if len(t1.columnas) != 1:
+        raise ErrorDeEjecución(f"La tabla {nombre_tabla1} debe tener exactamente 1 columna")
+    
+    filas_base = len(t2.columnas[0])
+    filas_nueva = len(t1.columnas[0])
+
+    if filas_nueva < filas_base:
+        raise ErrorDeEjecución(f"La tabla {nombre_tabla1} tiene menos filas que {nombre_tabla2}")
+
+    registrar_accion(tablas_existentes, acciones)
+
+    # Recorta t1 si tiene más filas que t2 y la agrega a la derecha
+    columna_a_agregar = list(t1.columnas[0][:filas_base])
+    t2.columnas.append(columna_a_agregar)
+
+    return f"Se agregó {nombre_tabla1} a {nombre_tabla2}:", t2
+
 
 def ejecutar_recorta(
-    tablas_existentes: dict[str, Tabla],
-    acciones,
-    nombre_tabla: str,
-    cantidad_de_filas: int
-) -> tuple[str,Tabla|None]:
-    '''
-    Recortar la tabla para que no tenga más que la cantidad solicitada de filas.
-    '''
-    return 'TODO: mensaje o nombre de la tabla que se devuelve', Tabla()
+    tablas_existentes: dict[str, Tabla], acciones: dict, nombre_tabla: str, cantidad_de_filas: int
+) -> tuple[str, Tabla|None]:
+    if nombre_tabla not in tablas_existentes:
+        raise ErrorDeEjecución(f"No existe la tabla {nombre_tabla}")
 
-def ejecutar_palante(tablas_existentes: dict[str, Tabla], acciones) -> tuple[str,Tabla|None]:
-    '''
-    Rehacer una acción de la lista de acciones.
-    '''
-    return 'TODO: mensaje o nombre de la tabla que se devuelve', Tabla()
+    registrar_accion(tablas_existentes, acciones)
 
-def ejecutar_patras(tablas_existentes: dict[str, Tabla], acciones) -> tuple[str,Tabla|None]:
-    '''
-    Deshacer una acción de la lista de acciones.
-    '''
-    return 'TODO: mensaje o nombre de la tabla que se devuelve', Tabla()
+    tabla = tablas_existentes[nombre_tabla]
+    # Sumamos 1 para mantener la fila 0 (los nombres de las columnas)
+    limite = cantidad_de_filas + 1
+    for i in range(len(tabla.columnas)):
+        tabla.columnas[i] = tabla.columnas[i][:limite]
+
+    return f"Se recortó {nombre_tabla} a {cantidad_de_filas} filas:", tabla
+
+
+def ejecutar_patras(tablas_existentes: dict[str, Tabla], acciones: dict) -> tuple[str, Tabla|None]:
+    # La consigna pide que si no hay acciones previas, no haga nada
+    if not acciones["historial"]:
+        return "No hay acciones anteriores para deshacer.", None
+
+    acciones["futuro"].append(copy.deepcopy(tablas_existentes))
+    estado_anterior = acciones["historial"].pop()
+
+    tablas_existentes.clear()
+    tablas_existentes.update(estado_anterior)
+    return "Se deshizo la última acción (PATRAS).", None
+
+
+def ejecutar_palante(tablas_existentes: dict[str, Tabla], acciones: dict) -> tuple[str, Tabla|None]:
+    # La consigna pide que si no hay acciones posteriores, no haga nada
+    if not acciones["futuro"]:
+        return "No hay acciones posteriores para rehacer.", None
+
+    acciones["historial"].append(copy.deepcopy(tablas_existentes))
+    estado_siguiente = acciones["futuro"].pop()
+
+    tablas_existentes.clear()
+    tablas_existentes.update(estado_siguiente)
+    return "Se rehizo la acción (PALANTE).", None
+
 
 def ejecutar(sentencia: Sentencia, tablas_existentes: dict[str, Tabla], acciones) -> tuple[str,Tabla|None]:
     match sentencia.tipo:
@@ -422,7 +505,7 @@ def main(entrada: TextIO, entrada_es_stdin: bool) -> int:
         prompt()
 
     tablas_existentes: dict[str, Tabla] = {}
-    acciones = None # TODO: hay que ver cómo representamos la lista de acciones
+    acciones = {"historial": [], "futuro": []}
 
     for número, línea in enumerate(entrada, 1):
         tokens = analizar_linea(línea, número)
@@ -454,6 +537,8 @@ if __name__ == '__main__':
     print("-----------------")
     print(f"Uso: {sys.argv[0]} [nombre de archivo]")
     print("Sin nombre de archivo, se lee la entrada estándar.")
+    # NOTA: Se implementa la corrección de la Etapa I, es decir, se agrega una indicacion de como salir.
+    print("Para detener la ejecución enviar una señal EOF (Ctrl+D en Linux o Ctrl+Z y Enter en Windows).")
     print("-----------------")
 
     # Verificar argumentos

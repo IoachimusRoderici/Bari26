@@ -40,8 +40,6 @@ PALANTE
 7. Exportar el resultado a un nuevo archivo (GUARDA):
 GUARDA salida.csv, t1
 
-
-
 Paso 3: Pruebas de errores (para verificar validaciones)
 
 Error Léxico (símbolo no permitido como @ o #):
