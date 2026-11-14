@@ -319,8 +319,8 @@ def registrar_accion(tablas_existentes: dict[str, Tabla], acciones: dict):
     acciones["historial"].append(copy.deepcopy(tablas_existentes))
     acciones["futuro"].clear()
 
-"""Obtiene la ruta actual .py para encontrar el archivo de datos en la misma carpeta que el script."""
 def ruta_en_carpeta_script(nombre_archivo: str) -> str:
+    """Obtiene la ruta actual .py para encontrar el archivo de datos en la misma carpeta que el script."""
     carpeta_script = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(carpeta_script, nombre_archivo)
 
@@ -337,6 +337,8 @@ def ejecutar_carga(
             primera_fila = next(lector)
             tabla.columnas = [[nombre] for nombre in primera_fila]
             for fila in lector:
+                # NOTA: Aqui, si las líneas del archivo son de distinto tamaño,
+                # optamos por lanzar una excepcion para que el usuario lo corrija.
                 if len(fila) != len(tabla.columnas):
                     raise ErrorDeEjecución(
                         f"El archivo {nombre_archivo} define {len(tabla.columnas)} columnas, "
