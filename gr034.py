@@ -504,7 +504,7 @@ def main(entrada: TextIO, entrada_es_stdin: bool) -> int:
         prompt()
 
     tablas_existentes: dict[str, Tabla] = {}
-    acciones = acciones = {"historial": [], "futuro": []}
+    acciones = {"historial": [], "futuro": []}
 
     for número, línea in enumerate(entrada, 1):
         tokens = analizar_linea(línea, número)
