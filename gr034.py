@@ -1,4 +1,4 @@
-'''Etapa III - Programación Del Intérprete
+'''Etapa III - Traducción a Código Intermedio & Programación Del Intérprete
 -----------------
 Compiladores e Intérpretes - Cátedra Arriazu (2026)
 Ingenieria en Computación (UNRN)
@@ -18,7 +18,7 @@ if sys.platform == "win32":
     import codecs
     sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer)
 
-#------------------ Etapa 1 ------------------
+#------------------ Etapa I: Lexi ------------------
 
 class Token:
     """
@@ -49,8 +49,9 @@ class Token:
         return f'<{self.tipo}, "{self.lexema}", línea {self.linea}>'
 
 # Configuración de Tokens usando REGEX directas.
-# Lista explícita de palabras reservadas. Se acepta toda la palabra en mayúscula o toda en minúscula.
-palabras_reservadas = "CARGA|carga|GUARDA|guarda|SEPARA|separa|AGREGA|agrega|RECORTA|recorta|PALANTE|palante|PATRAS|patras"
+# Lista explícita de palabras reservadas. 
+# NOTA: Se implementa la corrección de la Etapa I, es decir, solo acepta la palabra en mayúscula.
+palabras_reservadas = "CARGA|GUARDA|SEPARA|AGREGA|RECORTA|PALANTE|PATRAS"
 
 # Lista de tuplas que define las prioridades del analizador léxico.
 # Las expresiones primero en la lista se evalúan antes que las de abajo.
@@ -121,7 +122,7 @@ def analizar_linea(linea: str, numero_linea: int) -> list[Token]:
 
     return lista_tokens
 
-#------------------ Etapa 2 ------------------
+#------------------ Etapa II: Parser ------------------
 
 class Sentencia:
     """
@@ -251,7 +252,7 @@ def analizar_sintaxis(tokens: list[Token]) -> Sentencia:
     else:
         return consumir_sentencia(tokens)
 
-#------------------ Etapa 3 ------------------
+#------------------ Etapa III: Traducción ------------------
 
 class ErrorDeEjecución(Exception):
     """
@@ -535,6 +536,8 @@ if __name__ == '__main__':
     print("-----------------")
     print(f"Uso: {sys.argv[0]} [nombre de archivo]")
     print("Sin nombre de archivo, se lee la entrada estándar.")
+    # NOTA: Se implementa la corrección de la Etapa I, es decir, se agrega una indicacion de como salir.
+    print("Para detener la ejecución enviar una señal EOF (Ctrl+D en Linux o Ctrl+Z y Enter en Windows).")
     print("-----------------")
 
     # Verificar argumentos
