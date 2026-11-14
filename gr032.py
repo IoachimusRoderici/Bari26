@@ -295,6 +295,8 @@ if __name__ == '__main__':
     print("-----------------")
     print(f"Uso: {sys.argv[0]} [nombre de archivo]")
     print("Sin nombre de archivo, se lee la entrada estándar.")
+    # NOTA: Se implementa la corrección de la Etapa I, es decir, se agrega una indicacion de como salir.
+    print("Para detener la ejecución enviar una señal EOF (Ctrl+D en Linux o Ctrl+Z y Enter en Windows).")
     print("-----------------")
 
     # Verificar argumentos
