@@ -96,7 +96,6 @@ patron_lexico = "|".join(
 )
 patron_lexico_compilado = re.compile(patron_lexico)
 
-
 def analizar_linea(linea: str, numero_linea: int) -> list[Token]:
     """
     Función núcleo del analizador léxico encargada de procesar una cadena de texto (línea).

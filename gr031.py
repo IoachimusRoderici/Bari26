@@ -1,12 +1,12 @@
-# Etapa I – Construcción de Lexi/Preprocesador
-# -----------------
-# Compiladores e Intérpretres - Cátedra Arriazu (2026)
-# Ingenieria en Computacion (UNRN)
-# -----------------
-# Alumnos:
-#   Luciano Yaben
-#   Joaquín Rodriguez
-#   Enrique Nicanor Mariotti
+'''Etapa I - Construcción de Lexi/Preprocesador
+-----------------
+Compiladores e Intérpretes - Cátedra Arriazu (2026)
+Ingenieria en Computación (UNRN)
+-----------------
+Grupo N°3, Alumnos:
+  Luciano Yaben
+  Joaquín Rodriguez
+  Enrique Nicanor Mariotti'''
 
 import sys
 import re
@@ -47,7 +47,8 @@ class Token:
 
 # Configuración de Tokens usando REGEX directas.
 # Lista explícita de palabras reservadas. Se acepta toda la palabra en mayúscula o toda en minúscula.
-palabras_reservadas = "CARGA|carga|GUARDA|guarda|SEPARA|separa|AGREGA|agrega|RECORTA|recorta|PALANTE|palante|PATRAS|patras"
+# NOTA: Se implementa la corrección de la Etapa I, es decir, solo acepta la palabra en mayúscula.
+palabras_reservadas = "CARGA|GUARDA|SEPARA|AGREGA|RECORTA|PALANTE|PATRAS"
 
 # Lista de tuplas que define las prioridades del analizador léxico. 
 # Las expresiones primero en la lista se evalúan antes que las de abajo.
@@ -139,19 +140,13 @@ def main(entrada: TextIO, entrada_es_stdin: bool):
 if __name__ == '__main__':
 
     # Prints
-    print(f"Etapa I - Construcción de Lexi/Preprocesador") 
-    print(f"-----------------") 
-    print(f"Compiladores e Intérpretres - Cátedra Arriazu (2026)") 
-    print(f"Ingeniería en Computacion (UNRN)") 
-    print(f"-----------------") 
-    print(f"Grupo N°3") 
-    print(f"Luciano Yaben") 
-    print(f"Joaquín Rodriguez") 
-    print(f"Enrique Nicanor Mariotti") 
-    print(f"-----------------") 
+    print(__doc__)
+    print("-----------------")
     print(f"Uso: {sys.argv[0]} [nombre de archivo]")
-    print(f"Sin nombre de archivo, se lee la entrada estándar.")
-    print(f"-----------------") 
+    print("Sin nombre de archivo, se lee la entrada estándar.")
+    # NOTA: Se implementa la corrección de la Etapa I, es decir, se agrega una indicacion de como salir.
+    print("Para detener la ejecución enviar una señal EOF (Ctrl+D en Linux o Ctrl+Z y Enter en Windows).")
+    print("-----------------") 
 
     # Verificar argumentos
     if len(sys.argv) > 2:
