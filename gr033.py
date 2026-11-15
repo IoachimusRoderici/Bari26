@@ -377,7 +377,7 @@ def ejecutar_guarda(
         raise ErrorDeEjecución(f"Error inesperado escribiendo {nombre_archivo}: {type(error).__name__}, {error}")
 
     registrar_accion(tablas_existentes, acciones)
-    return f"Se escribió la tabla {nombre_tabla} en el archivo {nombre_archivo}", tabla
+    return f"Se escribió la tabla {nombre_tabla} en el archivo {nombre_archivo}", None
 
 
 def ejecutar_separa(
